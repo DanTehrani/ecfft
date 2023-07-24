@@ -85,7 +85,7 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
         // We can do this by checking if B is a quadratic residue
         let abscissa_exists = is_quad_residue(b);
         if abscissa_exists {
-            // Compute half point P, 2P = (0, 0)
+            // The half point P, 2P = (0, 0)
             x = sqrt_b;
         } else {
             return Some((1, F::ZERO));

@@ -112,7 +112,7 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Fp;
+    use crate::utils::tests::Fp;
     use ff::Field;
 
     #[test]

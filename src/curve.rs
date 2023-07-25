@@ -293,7 +293,7 @@ mod tests {
     use ff::Field;
 
     use super::*;
-    use crate::Fp;
+    use crate::utils::tests::Fp;
 
     fn to_unique<F: PrimeField>(a: &[F]) -> Vec<F> {
         let mut unique = vec![];

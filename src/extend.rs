@@ -74,7 +74,7 @@ mod tests {
     use crate::curve::GoodCurve;
     use crate::preprocess::{prepare_domain, prepare_matrices};
     use crate::unipoly::UniPoly;
-    use crate::Fp;
+    use crate::utils::tests::Fp;
 
     use super::*;
 

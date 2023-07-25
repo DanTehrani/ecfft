@@ -171,7 +171,7 @@ pub fn prepare_domain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<Vec<F>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Fp;
+    use crate::utils::tests::Fp;
 
     #[test]
     fn test_prepare_matrices() {

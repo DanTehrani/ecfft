@@ -73,10 +73,35 @@ pub fn extend<F: PrimeField>(
 mod tests {
     use crate::curve::GoodCurve;
     use crate::preprocess::{prepare_domain, prepare_matrices};
-    use crate::unipoly::UniPoly;
     use crate::utils::tests::Fp;
 
     use super::*;
+
+    #[derive(Clone)]
+    pub struct UniPoly<F>
+    where
+        F: PrimeField,
+    {
+        pub coeffs: Vec<F>,
+    }
+
+    impl<F> UniPoly<F>
+    where
+        F: PrimeField,
+    {
+        pub fn new(coeffs: Vec<F>) -> Self {
+            Self { coeffs } // [x^0, x^1, x^2, x^3...]
+        }
+
+        pub fn eval(&self, x: F) -> F {
+            let mut result = F::ZERO;
+            for (i, coeff) in self.coeffs.iter().enumerate() {
+                result += *coeff * x.pow(&[i as u64, 0, 0, 0]);
+            }
+
+            result
+        }
+    }
 
     #[test]
     fn test_extend() {

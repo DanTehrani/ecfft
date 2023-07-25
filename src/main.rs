@@ -1,8 +1,9 @@
 #![allow(non_snake_case)]
 mod curve;
-// mod extend;
+mod extend;
 mod get_2sylow_subgroup;
 mod preprocess;
+mod unipoly;
 mod utils;
 
 use ff::PrimeField;

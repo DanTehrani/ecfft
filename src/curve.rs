@@ -12,23 +12,25 @@ use crate::{get_2sylow_subgroup::det_2sylow_cyclic_subgroup, utils::is_quad_resi
 pub struct AffinePoint<F: PrimeField> {
     pub x: F,
     pub y: F,
+    pub infinity: bool,
 }
 
 impl<F: PrimeField> AffinePoint<F> {
     pub fn new(x: F, y: F) -> Self {
-        Self { x, y }
-    }
-
-    // Point at infinity
-    pub fn zero() -> Self {
         Self {
-            x: F::ZERO,
-            y: F::ZERO,
+            x,
+            y,
+            infinity: false,
         }
     }
 
-    pub fn is_zero(&self) -> bool {
-        self.x.is_zero().into() && self.y.is_zero().into()
+    // Point at infinity
+    pub fn infinity() -> Self {
+        Self {
+            x: F::ZERO,
+            y: F::ZERO,
+            infinity: true,
+        }
     }
 }
 
@@ -84,7 +86,7 @@ impl<F: PrimeField> GoodCurve<F> {
 
     pub fn good_point(&self) -> AffinePoint<F> {
         let y = self.B_sqrt * (self.a + self.B_sqrt.double()).sqrt().unwrap();
-        AffinePoint { x: self.B_sqrt, y }
+        AffinePoint::new(self.B_sqrt, y)
     }
 
     /*
@@ -227,9 +229,9 @@ pub fn ec_add<F: PrimeField, C: WeierstrassCurve>(
 ) -> AffinePoint<F> {
     // Addition law for elliptic curve groups
     // Source: "The arithmetic of elliptic curves, 2nd ed." Silverman, III.2.3
-    if a.is_zero() {
+    if a.infinity {
         *b
-    } else if b.is_zero() {
+    } else if b.infinity {
         *a
     } else {
         let a1 = curve.a1();
@@ -243,7 +245,7 @@ pub fn ec_add<F: PrimeField, C: WeierstrassCurve>(
         let y2 = b.y;
 
         if x1 == x2 && (y1 + y2 + a1 * x2 + a3).is_zero().into() {
-            AffinePoint::zero()
+            AffinePoint::infinity()
         } else {
             let lambda: F;
             let nu: F;
@@ -273,7 +275,7 @@ pub fn ec_mul<F: PrimeField, C: WeierstrassCurve>(
     s: &BigUint,
     curve: &GoodCurve<F>,
 ) -> AffinePoint<F> {
-    let mut res = AffinePoint::zero();
+    let mut res = AffinePoint::infinity();
     let mut acc = a.clone();
     let mut s = s.clone();
     while s.is_zero() == false {
@@ -288,13 +290,58 @@ pub fn ec_mul<F: PrimeField, C: WeierstrassCurve>(
 
 #[cfg(test)]
 mod tests {
+    use ff::Field;
+
     use super::*;
     use crate::Fp;
+
+    fn to_unique<F: PrimeField>(a: &[F]) -> Vec<F> {
+        let mut unique = vec![];
+        for a_i in a {
+            if !unique.contains(a_i) {
+                unique.push(*a_i);
+            }
+        }
+        unique
+    }
 
     #[test]
     fn test_find_k() {
         let k = 5;
         let curve = GoodCurve::<Fp>::find_k(k);
+
         assert_eq!(curve.k, k);
+
+        // Should generate a group of order 2^k
+        let G0 = AffinePoint::new(curve.gx, curve.gy);
+        let mut G = vec![];
+        for i in 0..2usize.pow(k as u32) {
+            let s = BigUint::from(i as u32);
+            G.push(ec_mul::<Fp, GoodCurve<Fp>>(&G0, &s, &curve));
+        }
+
+        let mut rng = rand::thread_rng();
+        let mut coset_offset_x = Fp::ZERO;
+        let mut coset_offset_y = Fp::ZERO;
+        loop {
+            coset_offset_x = Fp::random(&mut rng);
+            let y = (coset_offset_x
+                * (coset_offset_x.square() + curve.a * coset_offset_x + curve.B_sqrt.square()))
+            .sqrt();
+
+            if y.is_some().into() {
+                coset_offset_y = y.unwrap();
+                break;
+            }
+        }
+
+        let coset_offset = AffinePoint::new(coset_offset_x, coset_offset_y);
+
+        let L = G
+            .iter()
+            .map(|G_i| ec_add::<Fp, GoodCurve<Fp>>(G_i, &coset_offset, &curve).x)
+            .collect::<Vec<Fp>>();
+
+        assert_eq!(L.len(), 2usize.pow(k as u32));
     }
 }

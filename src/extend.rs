@@ -1,5 +1,5 @@
 use crate::preprocess::Matrix2x2;
-use ff::PrimeField;
+use halo2curves::ff::PrimeField;
 
 // https://solvable.group/posts/ecfft/
 
@@ -73,7 +73,7 @@ pub fn extend<F: PrimeField>(
 mod tests {
     use crate::curve::GoodCurve;
     use crate::preprocess::{prepare_domain, prepare_matrices};
-    use crate::utils::tests::Fp;
+    use halo2curves::bn256::Fq as Fp;
 
     use super::*;
 
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_extend() {
-        let k = 5;
+        let k = 7;
 
         let coeffs = (0..2usize.pow((k - 1) as u32))
             .map(|i| Fp::from(i as u64))

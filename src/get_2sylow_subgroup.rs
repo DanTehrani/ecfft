@@ -1,7 +1,7 @@
 use core::panic;
 
 use super::utils::is_quad_residue;
-use ff::PrimeField;
+use halo2curves::ff::PrimeField;
 
 fn get_fi_coeffs<F: PrimeField>(xi: F, a: F, b: F) -> ((F, F, F), (F, F, F)) {
     let determinant_sqrt = (xi.square() + a * xi + b).sqrt();
@@ -112,9 +112,8 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::tests::Fp;
-    use ff::Field;
-
+    use halo2curves::ff::Field;
+    use halo2curves::secp256k1::Fp;
     #[test]
     fn test_det_2sylow_cyclic_subgroup() {
         // Test against the curve with a subgroup of order 2^36 found by https://github.com/andrewmilson/ecfft

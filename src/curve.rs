@@ -1,4 +1,4 @@
-use ff::PrimeField;
+use halo2curves::ff::PrimeField;
 use num_bigint::BigUint;
 use num_integer::Integer;
 use num_traits::Zero;
@@ -163,7 +163,10 @@ impl<F: PrimeField> GoodCurve<F> {
 
         let b_sqrt_prime = b_prime.sqrt();
         if b_sqrt_prime.is_none().into() {
-            panic!("b_prime is not a square");
+            panic!(
+                "b_prime is not a square b_prime {:?} {:?}",
+                b_prime, b_sqrt_prime
+            );
         }
 
         let gx_prime = self.iso_x(g.x);
@@ -290,11 +293,10 @@ pub fn ec_mul<F: PrimeField, C: WeierstrassCurve>(
 
 #[cfg(test)]
 mod tests {
-    use ff::Field;
+    use halo2curves::ff::Field;
 
     use super::*;
-    use crate::utils::tests::Fp;
-
+    use halo2curves::secp256k1::Fp;
     fn to_unique<F: PrimeField>(a: &[F]) -> Vec<F> {
         let mut unique = vec![];
         for a_i in a {
@@ -307,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_find_k() {
-        let k = 5;
+        let k = 9;
         let curve = GoodCurve::<Fp>::find_k(k);
 
         assert_eq!(curve.k, k);

@@ -1,5 +1,5 @@
 use crate::curve::{ec_add, ec_mul, AffinePoint, GoodCurve};
-use ff::{derive::subtle::Choice, PrimeField};
+use halo2curves::ff::PrimeField;
 use num_bigint::BigUint;
 
 // 2 x 2 matrix
@@ -171,11 +171,10 @@ pub fn prepare_domain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<Vec<F>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::tests::Fp;
-
+    use halo2curves::secp256k1::Fp;
     #[test]
     fn test_prepare_matrices() {
-        let k = 4;
+        let k = 7;
         let good_curve = GoodCurve::<Fp>::find_k(k);
         let domain = prepare_domain(good_curve);
         let (matrices, inverse_matrices) = prepare_matrices(&domain);
@@ -186,7 +185,7 @@ mod tests {
 
     #[test]
     fn test_iso_chain() {
-        let good_curve = GoodCurve::<Fp>::find_k(6);
+        let good_curve = GoodCurve::<Fp>::find_k(7);
         let curves = isogeny_chain(good_curve.clone());
 
         // The generator of the group of order 4 should be as expected
@@ -197,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_prepare_domain() {
-        let good_curve = GoodCurve::<Fp>::find_k(4);
+        let good_curve = GoodCurve::<Fp>::find_k(7);
         let domain = prepare_domain(good_curve);
         for i in 0..domain.len() {
             assert_eq!(

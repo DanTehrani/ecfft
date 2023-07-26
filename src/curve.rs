@@ -89,66 +89,12 @@ impl<F: PrimeField> GoodCurve<F> {
         AffinePoint::new(self.B_sqrt, y)
     }
 
-    /*
-    pub fn iso(&self, p: &AffinePoint<F>) -> AffinePoint<F> {
-        let b = self.B_sqrt.square();
-
-        if p.is_zero() {
-            return AffinePoint::zero();
-        }
-
-        let good_point = self.good_point();
-
-        if good_point.x == p.x {
-            return AffinePoint::zero();
-        }
-
-        // If p.x is the identity, then the isogeny is the zero map (?)
-        if self.gx == p.x {
-            return AffinePoint::zero();
-        }
-
-        let x_prime = self.iso_x(p.x);
-        let y_prime = (F::ONE - b * p.x.square().invert().unwrap()) * p.y;
-
-        AffinePoint {
-            x: x_prime,
-            y: y_prime,
-        }
-    }
-    */
-
     pub fn iso_x(&self, x: F) -> F {
         if x.is_zero().into() {
             return F::ZERO;
         }
 
-        /*
-        if self.gx == x {
-            return F::ZERO;
-        }
-        */
-
         (x - self.B_sqrt).square() * x.invert().unwrap()
-
-        /*
-        let b = self.B_sqrt.square();
-        if x.is_zero().into() {
-            return F::ZERO;
-        }
-
-        let good_point = self.good_point();
-
-        if good_point.x == x {
-            return F::ZERO;
-        }
-
-        if self.gx == x {
-            return F::ZERO;
-        }
-
-        x - self.B_sqrt.double() + b * x.invert().unwrap()
-        */
     }
 
     // Return the curve that corresponds to the codomain of a 2-isogeny
@@ -297,15 +243,6 @@ mod tests {
 
     use super::*;
     use halo2curves::secp256k1::Fp;
-    fn to_unique<F: PrimeField>(a: &[F]) -> Vec<F> {
-        let mut unique = vec![];
-        for a_i in a {
-            if !unique.contains(a_i) {
-                unique.push(*a_i);
-            }
-        }
-        unique
-    }
 
     #[test]
     fn test_find_k() {

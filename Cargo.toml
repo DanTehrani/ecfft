@@ -11,3 +11,11 @@ num-bigint = "0.4.3"
 num-integer = "0.1.45"
 num-traits = "0.2.16"
 rand = "0.8.5"
+
+[[example]]
+name = "find_curve"
+path = "examples/find_curve.rs"
+
+[[example]]
+name = "extend"
+path = "examples/extend.rs"

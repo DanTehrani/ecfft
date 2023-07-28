@@ -15,21 +15,14 @@ pub fn extend<F: PrimeField>(
         return evals.to_vec();
     }
 
-    let s = L[i].iter().step_by(2).map(|x| *x).collect::<Vec<F>>();
-    let s_prime = L[i]
-        .iter()
-        .skip(1)
-        .step_by(2)
-        .map(|x| *x)
-        .collect::<Vec<F>>();
+    let L_i = &L[i];
 
-    debug_assert_eq!(s.len(), s_prime.len());
-    debug_assert_eq!(evals.len(), s.len());
+    debug_assert_eq!(evals.len(), L_i.len() / 2);
     let n = evals.len();
     let nn = n / 2;
     debug_assert_eq!(inverse_matrices[i].len(), nn);
 
-    if s.len() == 1 {
+    if L_i.len() == 2 {
         return evals.to_vec();
     }
 

@@ -28,8 +28,8 @@ pub fn extend<F: PrimeField>(
 
     // Deduce the evaluation of Q_1, Q_2, over \psi(s0)
     // from the evaluation Q over s0 and s1
-    let mut Q_1_evals = vec![];
-    let mut Q_2_evals = vec![];
+    let mut Q_1_evals = Vec::with_capacity(nn);
+    let mut Q_2_evals = Vec::with_capacity(nn);
 
     for j in 0..nn {
         let y0 = evals[j];

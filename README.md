@@ -5,6 +5,9 @@ This library implements the EXTEND operation from [ECFFT Part I](https://arxiv.o
 - Find an elliptic curve over a given odd-sized finite field with a subgroup of order $2^k$.
 - Construct the FFTree based on the 2-isogeny chain of elliptic curves.
 
+## Usage
+See [examples](examples/).
+
 ## Run tests
 ```bash
 cargo test

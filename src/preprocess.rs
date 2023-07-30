@@ -1,6 +1,5 @@
-use crate::curve::{ec_add, ec_mul, AffinePoint, GoodCurve};
+use crate::curve::{ec_add, AffinePoint, GoodCurve};
 use halo2curves::ff::PrimeField;
-use num_bigint::BigUint;
 
 // 2 x 2 matrix
 #[derive(Debug, Clone, Copy)]
@@ -96,16 +95,6 @@ pub fn prepare_matrices<F: PrimeField>(
     (matrices, inverse_matrices)
 }
 
-fn to_unique<F: PrimeField>(a: &[F]) -> Vec<F> {
-    let mut unique = vec![];
-    for a_i in a {
-        if !unique.contains(a_i) {
-            unique.push(*a_i);
-        }
-    }
-    unique
-}
-
 fn isogeny_chain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<GoodCurve<F>> {
     let mut curves = Vec::with_capacity(good_curve.k - 1);
     curves.push(good_curve);
@@ -115,54 +104,41 @@ fn isogeny_chain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<GoodCurve<F>> {
     curves
 }
 
-pub fn prepare_domain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<Vec<F>> {
+pub fn prepare_domain<F: PrimeField>(
+    good_curve: GoodCurve<F>,
+    coset_offset_x: F,
+    coset_offset_y: F,
+) -> Vec<Vec<F>> {
     let curves = isogeny_chain(good_curve.clone());
 
+    let coset_offset = AffinePoint::new(coset_offset_x, coset_offset_y);
     let g = AffinePoint::new(good_curve.gx, good_curve.gy);
+    let coset_g = ec_add::<F, GoodCurve<F>>(&g, &coset_offset, &good_curve);
     // Generate the group of order 2^k and collect the x-coordinates of the points
 
-    let G = (0..2u32.pow(good_curve.k as u32))
-        .map(|i| {
-            let s = BigUint::from(i);
-            ec_mul::<F, GoodCurve<F>>(&g, &s, &good_curve)
-        })
-        .collect::<Vec<AffinePoint<F>>>();
+    let n = 2usize.pow(good_curve.k as u32);
+    let mut G = Vec::with_capacity(n);
+    G.push(coset_offset);
+    G.push(coset_g.clone());
 
-    let mut rng = rand::thread_rng();
-    let mut coset_offset_x = F::ZERO;
-    let mut coset_offset_y = F::ZERO;
-
-    loop {
-        coset_offset_x = F::random(&mut rng);
-        let y = (coset_offset_x
-            * (coset_offset_x.square() + curves[0].a * coset_offset_x + curves[0].B_sqrt.square()))
-        .sqrt();
-
-        if y.is_some().into() {
-            coset_offset_y = y.unwrap();
-            break;
-        }
+    for i in 1..n - 1 {
+        G.push(ec_add::<F, GoodCurve<F>>(&G[i as usize], &g, &curves[0]))
     }
 
-    let coset_offset = AffinePoint::new(coset_offset_x, coset_offset_y);
-
-    // Apply the coset offset and get the projection on F
-    let L0 = G
-        .iter()
-        .map(|p| ec_add::<F, GoodCurve<F>>(p, &coset_offset, &good_curve).x)
-        .collect::<Vec<F>>();
+    // Collect the x-coordinates of the points
+    let L0 = G.iter().map(|p| p.x).collect::<Vec<F>>();
 
     let mut L = Vec::with_capacity(good_curve.k);
     L.push(L0);
 
-    // TODO: Stop doing to_unique here
     for i in 0..(good_curve.k - 2) {
         let L_i = &L[i];
-        L.push(to_unique(
-            &L_i.iter()
+        L.push(
+            L_i[..(L_i.len() / 2)]
+                .iter()
                 .map(|L_i| curves[i].iso_x(*L_i))
                 .collect::<Vec<F>>(),
-        ))
+        )
     }
 
     L
@@ -170,14 +146,18 @@ pub fn prepare_domain<F: PrimeField>(good_curve: GoodCurve<F>) -> Vec<Vec<F>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::find_coset_offset;
+
     use super::*;
     use halo2curves::secp256k1::Fp;
     #[test]
     fn test_prepare_matrices() {
         let k = 7;
         let good_curve = GoodCurve::<Fp>::find_k(k);
-        let domain = prepare_domain(good_curve);
-        let (matrices, inverse_matrices) = prepare_matrices(&domain);
+        let (coset_offset_x, coset_offset_y) =
+            find_coset_offset(good_curve.a, good_curve.B_sqrt.square());
+        let domain = prepare_domain(good_curve, coset_offset_x, coset_offset_y);
+        let (matrices, _) = prepare_matrices(&domain);
         for i in 0..matrices.len() {
             assert_eq!(matrices[i].len(), 2usize.pow((k - 2 - i) as u32));
         }
@@ -196,8 +176,10 @@ mod tests {
 
     #[test]
     fn test_prepare_domain() {
-        let good_curve = GoodCurve::<Fp>::find_k(7);
-        let domain = prepare_domain(good_curve);
+        let good_curve = GoodCurve::<Fp>::find_k(5);
+        let (coset_offset_x, coset_offset_y) =
+            find_coset_offset(good_curve.a, good_curve.B_sqrt.square());
+        let domain = prepare_domain(good_curve.clone(), coset_offset_x, coset_offset_y);
         for i in 0..domain.len() {
             assert_eq!(
                 domain[i].len(),

@@ -9,3 +9,4 @@ mod utils;
 pub use curve::GoodCurve;
 pub use extend::extend;
 pub use preprocess::{prepare_domain, prepare_matrices, Matrix2x2};
+pub use utils::find_coset_offset;

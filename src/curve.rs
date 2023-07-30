@@ -1,7 +1,4 @@
 use halo2curves::ff::PrimeField;
-use num_bigint::BigUint;
-use num_integer::Integer;
-use num_traits::Zero;
 
 // Copied from https://github.com/andrewmilson/ecfft/blob/main/src/ec.rs
 use std::fmt::Debug;
@@ -47,14 +44,14 @@ pub struct GoodCurve<F: PrimeField> {
 
 impl<F: PrimeField> GoodCurve<F> {
     pub fn new(a: F, B_sqrt: F, gx: F, gy: F, k: usize) -> Self {
-        assert!(B_sqrt != F::ZERO);
+        debug_assert!(B_sqrt != F::ZERO);
         let b = B_sqrt.square();
 
         // Check a - 2B != 0 where B is the degree 1 coefficient of the curve
-        assert!((a.square() - b.double().double()) != F::ZERO);
+        debug_assert!((a.square() - b.double().double()) != F::ZERO);
 
         // Check a + 2b is a quadratic residue
-        assert!(is_quad_residue(a + B_sqrt.double()));
+        debug_assert!(is_quad_residue(a + B_sqrt.double()));
 
         Self {
             a,
@@ -219,27 +216,10 @@ pub fn ec_add<F: PrimeField, C: WeierstrassCurve>(
     }
 }
 
-pub fn ec_mul<F: PrimeField, C: WeierstrassCurve>(
-    a: &AffinePoint<F>,
-    s: &BigUint,
-    curve: &GoodCurve<F>,
-) -> AffinePoint<F> {
-    let mut res = AffinePoint::infinity();
-    let mut acc = a.clone();
-    let mut s = s.clone();
-    while s.is_zero() == false {
-        if s.is_odd() {
-            res = ec_add::<F, C>(&acc, &res, curve);
-        }
-        acc = ec_add::<F, C>(&acc, &acc, curve);
-        s >>= 1;
-    }
-    res
-}
-
 #[cfg(test)]
 mod tests {
-    use halo2curves::ff::Field;
+
+    use crate::find_coset_offset;
 
     use super::*;
     use halo2curves::secp256k1::Fp;
@@ -252,28 +232,17 @@ mod tests {
         assert_eq!(curve.k, k);
 
         // Should generate a group of order 2^k
-        let G0 = AffinePoint::new(curve.gx, curve.gy);
-        let mut G = vec![];
-        for i in 0..2usize.pow(k as u32) {
-            let s = BigUint::from(i as u32);
-            G.push(ec_mul::<Fp, GoodCurve<Fp>>(&G0, &s, &curve));
+        let g = AffinePoint::new(curve.gx, curve.gy);
+        let n = 2usize.pow(k as u32);
+        let mut G = Vec::with_capacity(n);
+        G.push(AffinePoint::infinity());
+        G.push(g.clone());
+
+        for i in 1..2usize.pow(k as u32) - 1 {
+            G.push(ec_add::<Fp, GoodCurve<Fp>>(&G[i], &g, &curve));
         }
 
-        let mut rng = rand::thread_rng();
-        let mut coset_offset_x = Fp::ZERO;
-        let mut coset_offset_y = Fp::ZERO;
-        loop {
-            coset_offset_x = Fp::random(&mut rng);
-            let y = (coset_offset_x
-                * (coset_offset_x.square() + curve.a * coset_offset_x + curve.B_sqrt.square()))
-            .sqrt();
-
-            if y.is_some().into() {
-                coset_offset_y = y.unwrap();
-                break;
-            }
-        }
-
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
         let coset_offset = AffinePoint::new(coset_offset_x, coset_offset_y);
 
         let L = G

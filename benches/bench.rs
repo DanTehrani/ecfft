@@ -1,13 +1,18 @@
 #![allow(non_snake_case)]
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use ecfft::{extend, prepare_domain, prepare_matrices, GoodCurve};
+use ecfft::{extend, find_coset_offset, prepare_domain, prepare_matrices, GoodCurve};
 
 type F = halo2curves::bn256::Fq;
 
 fn prepare_matrices_bench(c: &mut Criterion) {
     for k in [10] {
         let curve = GoodCurve::<F>::find_k(k);
-        let L = prepare_domain(black_box(curve));
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let L = prepare_domain(
+            black_box(curve),
+            black_box(coset_offset_x),
+            black_box(coset_offset_y),
+        );
 
         let mut group = c.benchmark_group("prepare_matrices");
         group.bench_function(format!("prepare_matrices k = {}", k), |b| {
@@ -21,11 +26,16 @@ fn prepare_matrices_bench(c: &mut Criterion) {
 fn prepare_domain_bench(c: &mut Criterion) {
     for k in [10] {
         let curve = GoodCurve::<F>::find_k(k);
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
 
         let mut group = c.benchmark_group("prepare_domain");
         group.bench_function(format!("prepare_domain k = {}", k), |b| {
             b.iter(|| {
-                prepare_domain(black_box(curve));
+                prepare_domain(
+                    black_box(curve),
+                    black_box(coset_offset_x),
+                    black_box(coset_offset_y),
+                );
             })
         });
     }
@@ -33,8 +43,9 @@ fn prepare_domain_bench(c: &mut Criterion) {
 
 fn extend_bench(c: &mut Criterion) {
     for k in [10] {
-        let curve = GoodCurve::find_k(k);
-        let L = prepare_domain(curve);
+        let curve = GoodCurve::<F>::find_k(k);
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let L = prepare_domain(curve, coset_offset_x, coset_offset_y);
         let (matrices, inverse_matrices) = prepare_matrices(&L);
 
         let evals = (0..(2usize.pow((k - 1) as u32)))
@@ -64,6 +75,6 @@ fn set_duration() -> Criterion {
 criterion_group! {
     name = benches;
     config = set_duration();
-    targets = extend_bench, prepare_domain_bench, prepare_matrices_bench
+    targets =  extend_bench, prepare_matrices_bench, prepare_domain_bench
 }
 criterion_main!(benches);

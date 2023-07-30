@@ -66,6 +66,7 @@ pub fn extend<F: PrimeField>(
 mod tests {
     use crate::curve::GoodCurve;
     use crate::preprocess::{prepare_domain, prepare_matrices};
+    use crate::utils::find_coset_offset;
     use halo2curves::bn256::Fq as Fp;
 
     use super::*;
@@ -107,7 +108,9 @@ mod tests {
         let poly = UniPoly::new(coeffs);
 
         let good_curve = GoodCurve::<Fp>::find_k(k);
-        let L = prepare_domain(good_curve);
+        let (coset_offset_x, coset_offset_y) =
+            find_coset_offset(good_curve.a, good_curve.B_sqrt.square());
+        let L = prepare_domain(good_curve, coset_offset_x, coset_offset_y);
 
         let s = L[0].iter().step_by(2).map(|x| *x).collect::<Vec<Fp>>();
         let s_prime = L[0]

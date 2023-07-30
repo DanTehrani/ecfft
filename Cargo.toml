@@ -19,3 +19,10 @@ path = "examples/find_curve.rs"
 [[example]]
 name = "extend"
 path = "examples/extend.rs"
+
+[dev-dependencies]
+criterion = { version = "0.4", features = ["html_reports"] }
+
+[[bench]]
+name = "bench"
+harness = false

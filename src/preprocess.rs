@@ -1,5 +1,5 @@
 use crate::curve::{ec_add, AffinePoint, GoodCurve};
-use halo2curves::ff::PrimeField;
+use halo2curves::group::ff::PrimeField;
 
 // 2 x 2 matrix
 #[derive(Debug, Clone, Copy)]
@@ -13,7 +13,7 @@ pub struct Matrix2x2<F: PrimeField> {
 impl<F: PrimeField> Matrix2x2<F> {
     pub fn invert(&self) -> Self {
         let det = self.a * self.d - self.b * self.c;
-        assert_ne!(det, F::ZERO);
+        assert_ne!(det, F::zero());
         let inv_det = det.invert().unwrap();
 
         Self {
@@ -63,9 +63,9 @@ pub fn prepare_matrices<F: PrimeField>(
             // The denominator v(x) of the degree-2 map is x
             let q = nn - 1;
 
-            let a = s0.pow(&[q as u64, 0, 0, 0]);
+            let a = s0.pow_vartime(&[q as u64, 0, 0, 0]);
             let b = s0 * a;
-            let c = s1.pow(&[q as u64, 0, 0, 0]);
+            let c = s1.pow_vartime(&[q as u64, 0, 0, 0]);
             let d = s1 * c;
 
             let m = Matrix2x2 { a, b, c, d };
@@ -80,9 +80,9 @@ pub fn prepare_matrices<F: PrimeField>(
             // The denominator v(x) of the degree-2 map is x
             let q = nn - 1;
 
-            let a = s0.pow(&[q as u64, 0, 0, 0]);
+            let a = s0.pow_vartime(&[q as u64, 0, 0, 0]);
             let b = s0 * a;
-            let c = s1.pow(&[q as u64, 0, 0, 0]);
+            let c = s1.pow_vartime(&[q as u64, 0, 0, 0]);
             let d = s1 * c;
 
             let m = Matrix2x2 { a, b, c, d };

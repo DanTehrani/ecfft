@@ -1,4 +1,4 @@
-use halo2curves::ff::PrimeField;
+use halo2curves::group::ff::PrimeField;
 
 pub fn is_quad_residue<F: PrimeField>(a: F) -> bool {
     let sqrt = a.sqrt();
@@ -7,8 +7,8 @@ pub fn is_quad_residue<F: PrimeField>(a: F) -> bool {
 
 pub fn find_coset_offset<F: PrimeField>(a: F, b: F) -> (F, F) {
     let mut rng = rand::thread_rng();
-    let mut coset_offset_x = F::ZERO;
-    let mut coset_offset_y = F::ZERO;
+    let mut coset_offset_x = F::zero();
+    let mut coset_offset_y = F::zero();
 
     loop {
         coset_offset_x = F::random(&mut rng);

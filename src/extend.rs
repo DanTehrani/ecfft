@@ -1,5 +1,5 @@
 use crate::preprocess::Matrix2x2;
-use halo2curves::ff::PrimeField;
+use halo2curves::group::ff::PrimeField;
 
 // https://solvable.group/posts/ecfft/
 
@@ -46,7 +46,7 @@ pub fn extend<F: PrimeField>(
     let Q_1_evals_prime = extend(&Q_1_evals, L, matrices, inverse_matrices, i + 1);
     let Q_2_evals_prime = extend(&Q_2_evals, L, matrices, inverse_matrices, i + 1);
 
-    let mut extended_evals = vec![F::ZERO; evals.len()];
+    let mut extended_evals = vec![F::zero(); evals.len()];
 
     for (i, ((q1, q2), m)) in Q_1_evals_prime
         .iter()
@@ -88,9 +88,9 @@ mod tests {
         }
 
         pub fn eval(&self, x: F) -> F {
-            let mut result = F::ZERO;
+            let mut result = F::zero();
             for (i, coeff) in self.coeffs.iter().enumerate() {
-                result += *coeff * x.pow(&[i as u64, 0, 0, 0]);
+                result += *coeff * x.pow_vartime(&[i as u64, 0, 0, 0]);
             }
 
             result

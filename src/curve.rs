@@ -1,4 +1,4 @@
-use halo2curves::ff::PrimeField;
+use halo2curves::group::ff::PrimeField;
 
 // Copied from https://github.com/andrewmilson/ecfft/blob/main/src/ec.rs
 use std::fmt::Debug;
@@ -24,8 +24,8 @@ impl<F: PrimeField> AffinePoint<F> {
     // Point at infinity
     pub fn infinity() -> Self {
         Self {
-            x: F::ZERO,
-            y: F::ZERO,
+            x: F::zero(),
+            y: F::zero(),
             infinity: true,
         }
     }
@@ -44,11 +44,11 @@ pub struct GoodCurve<F: PrimeField> {
 
 impl<F: PrimeField> GoodCurve<F> {
     pub fn new(a: F, B_sqrt: F, gx: F, gy: F, k: usize) -> Self {
-        debug_assert!(B_sqrt != F::ZERO);
+        debug_assert!(B_sqrt != F::zero());
         let b = B_sqrt.square();
 
         // Check a - 2B != 0 where B is the degree 1 coefficient of the curve
-        debug_assert!((a.square() - b.double().double()) != F::ZERO);
+        debug_assert!((a.square() - b.double().double()) != F::zero());
 
         // Check a + 2b is a quadratic residue
         debug_assert!(is_quad_residue(a + B_sqrt.double()));
@@ -88,7 +88,7 @@ impl<F: PrimeField> GoodCurve<F> {
 
     pub fn iso_x(&self, x: F) -> F {
         if x.is_zero().into() {
-            return F::ZERO;
+            return F::zero();
         }
 
         (x - self.B_sqrt).square() * x.invert().unwrap()
@@ -148,7 +148,7 @@ impl<F: PrimeField> WeierstrassCurve for GoodCurve<F> {
     type F = F;
 
     fn a1(&self) -> Self::F {
-        F::ZERO
+        F::zero()
     }
 
     fn a2(&self) -> Self::F {
@@ -156,7 +156,7 @@ impl<F: PrimeField> WeierstrassCurve for GoodCurve<F> {
     }
 
     fn a3(&self) -> Self::F {
-        F::ZERO
+        F::zero()
     }
 
     fn a4(&self) -> Self::F {
@@ -164,7 +164,7 @@ impl<F: PrimeField> WeierstrassCurve for GoodCurve<F> {
     }
 
     fn a6(&self) -> Self::F {
-        F::ZERO
+        F::zero()
     }
 }
 

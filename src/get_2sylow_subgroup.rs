@@ -1,7 +1,7 @@
 use core::panic;
 
 use super::utils::is_quad_residue;
-use halo2curves::ff::PrimeField;
+use halo2curves::group::ff::PrimeField;
 
 fn get_fi_coeffs<F: PrimeField>(xi: F, a: F, b: F) -> ((F, F, F), (F, F, F)) {
     let determinant_sqrt = (xi.square() + a * xi + b).sqrt();
@@ -10,7 +10,7 @@ fn get_fi_coeffs<F: PrimeField>(xi: F, a: F, b: F) -> ((F, F, F), (F, F, F)) {
     } else {
         let f1_deg1_coeff = -F::from(2) * (xi - determinant_sqrt.unwrap());
         let f2_deg1_coeff = -F::from(2) * (xi + determinant_sqrt.unwrap());
-        ((F::ONE, f1_deg1_coeff, b), (F::ONE, f2_deg1_coeff, b))
+        ((F::one(), f1_deg1_coeff, b), (F::one(), f2_deg1_coeff, b))
     }
 }
 
@@ -52,14 +52,14 @@ fn compute_half_point<F: PrimeField>(x: F, a: F, b: F) -> F {
             (-f1_b + f1_xi_sqrt_discriminant_sqrt.unwrap()) * (F::from(2) * f1_a).invert().unwrap();
         // Check that the root is correct
         let eval = eval_f1(root, f1_a, f1_b, f1_c);
-        debug_assert_eq!(eval, F::ZERO);
+        debug_assert_eq!(eval, F::zero());
         root
     } else {
         let root =
             (-f2_b + f2_xi_sqrt_discriminant_sqrt.unwrap()) * (F::from(2) * f2_a).invert().unwrap();
         // Check that the root is correct
         let eval = eval_f1(root, f2_a, f2_b, f2_c);
-        debug_assert_eq!(eval, F::ZERO);
+        debug_assert_eq!(eval, F::zero());
         root
     };
 
@@ -79,7 +79,7 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
         // We don't implement this case.
         None
     } else {
-        let mut x = F::ZERO;
+        let mut x = F::zero();
 
         // Check if there is a point that forms a group of order 4
         // We can do this by checking if B is a quadratic residue
@@ -88,7 +88,7 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
             // The half point P, 2P = (0, 0)
             x = sqrt_b;
         } else {
-            return Some((1, F::ZERO));
+            return Some((1, F::zero()));
         }
 
         // Loop until x is not a quadratic residue
@@ -112,7 +112,7 @@ pub fn det_2sylow_cyclic_subgroup<F: PrimeField>(a: F, sqrt_b: F) -> Option<(usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use halo2curves::ff::Field;
+    use halo2curves::group::ff::Field;
     use halo2curves::secp256k1::Fp;
     #[test]
     fn test_det_2sylow_cyclic_subgroup() {

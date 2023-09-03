@@ -2,12 +2,13 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use ecfft::{extend, find_coset_offset, prepare_domain, prepare_matrices, GoodCurve};
 
-type F = halo2curves::bn256::Fq;
+type F = ark_secp256k1::Fq;
 
 fn prepare_matrices_bench(c: &mut Criterion) {
     for k in [10] {
         let curve = GoodCurve::<F>::find_k(k);
-        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let (coset_offset_x, coset_offset_y) =
+            find_coset_offset(curve.a, curve.B_sqrt * curve.B_sqrt);
         let L = prepare_domain(
             black_box(curve),
             black_box(coset_offset_x),
@@ -26,7 +27,7 @@ fn prepare_matrices_bench(c: &mut Criterion) {
 fn prepare_domain_bench(c: &mut Criterion) {
     for k in [10] {
         let curve = GoodCurve::<F>::find_k(k);
-        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt);
 
         let mut group = c.benchmark_group("prepare_domain");
         group.bench_function(format!("prepare_domain k = {}", k), |b| {
@@ -44,7 +45,7 @@ fn prepare_domain_bench(c: &mut Criterion) {
 fn extend_bench(c: &mut Criterion) {
     for k in [10] {
         let curve = GoodCurve::<F>::find_k(k);
-        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt);
         let L = prepare_domain(curve, coset_offset_x, coset_offset_y);
         let (matrices, inverse_matrices) = prepare_matrices(&L);
 

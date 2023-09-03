@@ -1,5 +1,5 @@
 use crate::curve::{ec_add, AffinePoint, GoodCurve};
-use halo2curves::group::ff::PrimeField;
+use ark_ff::PrimeField;
 
 // 2 x 2 matrix
 #[derive(Debug, Clone, Copy)]
@@ -14,7 +14,7 @@ impl<F: PrimeField> Matrix2x2<F> {
     pub fn invert(&self) -> Self {
         let det = self.a * self.d - self.b * self.c;
         assert_ne!(det, F::zero());
-        let inv_det = det.invert().unwrap();
+        let inv_det = det.inverse().unwrap();
 
         Self {
             a: self.d * inv_det,
@@ -63,9 +63,9 @@ pub fn prepare_matrices<F: PrimeField>(
             // The denominator v(x) of the degree-2 map is x
             let q = nn - 1;
 
-            let a = s0.pow_vartime(&[q as u64, 0, 0, 0]);
+            let a = s0.pow(&[q as u64, 0, 0, 0]);
             let b = s0 * a;
-            let c = s1.pow_vartime(&[q as u64, 0, 0, 0]);
+            let c = s1.pow(&[q as u64, 0, 0, 0]);
             let d = s1 * c;
 
             let m = Matrix2x2 { a, b, c, d };
@@ -80,9 +80,9 @@ pub fn prepare_matrices<F: PrimeField>(
             // The denominator v(x) of the degree-2 map is x
             let q = nn - 1;
 
-            let a = s0.pow_vartime(&[q as u64, 0, 0, 0]);
+            let a = s0.pow(&[q as u64, 0, 0, 0]);
             let b = s0 * a;
-            let c = s1.pow_vartime(&[q as u64, 0, 0, 0]);
+            let c = s1.pow(&[q as u64, 0, 0, 0]);
             let d = s1 * c;
 
             let m = Matrix2x2 { a, b, c, d };
@@ -149,13 +149,14 @@ mod tests {
     use crate::utils::find_coset_offset;
 
     use super::*;
-    use halo2curves::secp256k1::Fp;
+    use ark_secp256k1::Fq as Fp;
+
     #[test]
     fn test_prepare_matrices() {
         let k = 7;
         let good_curve = GoodCurve::<Fp>::find_k(k);
         let (coset_offset_x, coset_offset_y) =
-            find_coset_offset(good_curve.a, good_curve.B_sqrt.square());
+            find_coset_offset(good_curve.a, good_curve.B_sqrt * good_curve.B_sqrt);
         let domain = prepare_domain(good_curve, coset_offset_x, coset_offset_y);
         let (matrices, _) = prepare_matrices(&domain);
         for i in 0..matrices.len() {
@@ -178,7 +179,7 @@ mod tests {
     fn test_prepare_domain() {
         let good_curve = GoodCurve::<Fp>::find_k(5);
         let (coset_offset_x, coset_offset_y) =
-            find_coset_offset(good_curve.a, good_curve.B_sqrt.square());
+            find_coset_offset(good_curve.a, good_curve.B_sqrt * good_curve.B_sqrt);
         let domain = prepare_domain(good_curve.clone(), coset_offset_x, coset_offset_y);
         for i in 0..domain.len() {
             assert_eq!(

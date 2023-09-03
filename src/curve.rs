@@ -1,4 +1,4 @@
-use halo2curves::group::ff::PrimeField;
+use ark_ff::PrimeField;
 
 // Copied from https://github.com/andrewmilson/ecfft/blob/main/src/ec.rs
 use std::fmt::Debug;
@@ -66,8 +66,8 @@ impl<F: PrimeField> GoodCurve<F> {
         // Find a curve with a 2-Sylow subgroup of order 10
         let mut rng = rand::thread_rng();
         loop {
-            let a = F::random(&mut rng);
-            let sqrt_b = F::random(&mut rng);
+            let a = F::rand(&mut rng);
+            let sqrt_b = F::rand(&mut rng);
             match det_2sylow_cyclic_subgroup(a, sqrt_b) {
                 Some((c_k, gx)) => {
                     if c_k == k {
@@ -91,7 +91,7 @@ impl<F: PrimeField> GoodCurve<F> {
             return F::zero();
         }
 
-        (x - self.B_sqrt).square() * x.invert().unwrap()
+        (x - self.B_sqrt).square() * x.inverse().unwrap()
     }
 
     // Return the curve that corresponds to the codomain of a 2-isogeny
@@ -102,7 +102,7 @@ impl<F: PrimeField> GoodCurve<F> {
         let g = AffinePoint::new(self.gx, self.gy);
 
         let a_prime = a + b_sqrt.double().double() + b_sqrt.double();
-        let b_prime = (a * b_sqrt).double().double() + F::from(8) * b;
+        let b_prime = (a * b_sqrt).double().double() + F::from(8u64) * b;
 
         let b_sqrt_prime = b_prime.sqrt();
         if b_sqrt_prime.is_none().into() {
@@ -201,13 +201,13 @@ pub fn ec_add<F: PrimeField, C: WeierstrassCurve>(
                 let a2x1 = a2 * x1;
                 let a1x1 = a1 * x1;
                 lambda = (x1x1 + x1x1 + x1x1 + a2x1 + a2x1 + a4 - a1 * y1)
-                    * (y1 + y1 + a1x1 + a3).invert().unwrap();
+                    * (y1 + y1 + a1x1 + a3).inverse().unwrap();
                 nu = (-(x1x1 * x1) + a4 * x1 + a6 + a6 - a3 * y1)
-                    * (y1 + y1 + a1 * x1 + a3).invert().unwrap();
+                    * (y1 + y1 + a1 * x1 + a3).inverse().unwrap();
             } else {
                 // slope through the AffinePoints
-                lambda = (y2 - y1) * (x2 - x1).invert().unwrap();
-                nu = (y1 * x2 - y2 * x1) * (x2 - x1).invert().unwrap();
+                lambda = (y2 - y1) * (x2 - x1).inverse().unwrap();
+                nu = (y1 * x2 - y2 * x1) * (x2 - x1).inverse().unwrap();
             }
             let x3 = lambda.square() + a1 * lambda - a2 - x1 - x2;
             let y3 = -(lambda + a1) * x3 - nu - a3;
@@ -222,7 +222,7 @@ mod tests {
     use crate::find_coset_offset;
 
     use super::*;
-    use halo2curves::secp256k1::Fp;
+    use ark_secp256k1::Fq as Fp;
 
     #[test]
     fn test_find_k() {
@@ -242,7 +242,8 @@ mod tests {
             G.push(ec_add::<Fp, GoodCurve<Fp>>(&G[i], &g, &curve));
         }
 
-        let (coset_offset_x, coset_offset_y) = find_coset_offset(curve.a, curve.B_sqrt.square());
+        let (coset_offset_x, coset_offset_y) =
+            find_coset_offset(curve.a, curve.B_sqrt * curve.B_sqrt);
         let coset_offset = AffinePoint::new(coset_offset_x, coset_offset_y);
 
         let L = G

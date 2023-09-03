@@ -1,5 +1,5 @@
+use ark_secp256k1::Fq;
 use ecfft::GoodCurve;
-use halo2curves::bn256::Fq;
 
 fn main() {
     let k = 6;
@@ -10,7 +10,7 @@ fn main() {
 with subgroup of order 2^{} with generator:
 ({:?}, {:?})",
         curve.a,
-        curve.B_sqrt.square(),
+        curve.B_sqrt * curve.B_sqrt,
         curve.k,
         curve.gx,
         curve.gy

@@ -13,5 +13,5 @@ fn main() {
         .map(|i| F::from(i as u64))
         .collect::<Vec<F>>();
 
-    let _extended_evals = extend(&evals, &L, &matrices, &inverse_matrices, 0);
+    let _extended_evals = extend(&evals, &matrices, &inverse_matrices, 0);
 }

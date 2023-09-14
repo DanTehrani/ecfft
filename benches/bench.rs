@@ -59,7 +59,6 @@ fn extend_bench(c: &mut Criterion) {
                 // Extend the evaluations of a polynomial with degree < 2^(k - 1)
                 extend(
                     black_box(&evals),
-                    black_box(&L),
                     black_box(&matrices),
                     black_box(&inverse_matrices),
                     0,

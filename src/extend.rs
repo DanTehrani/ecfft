@@ -6,7 +6,6 @@ use ark_ff::PrimeField;
 // Low-degree extension
 pub fn extend<F: PrimeField>(
     evals: &[F],
-    L: &Vec<Vec<F>>,
     matrices: &Vec<Vec<Matrix2x2<F>>>,
     inverse_matrices: &Vec<Vec<Matrix2x2<F>>>,
     i: usize,
@@ -15,16 +14,9 @@ pub fn extend<F: PrimeField>(
         return evals.to_vec();
     }
 
-    let L_i = &L[i];
-
-    debug_assert_eq!(evals.len(), L_i.len() / 2);
     let n = evals.len();
     let nn = n / 2;
     debug_assert_eq!(inverse_matrices[i].len(), nn);
-
-    if L_i.len() == 2 {
-        return evals.to_vec();
-    }
 
     // Deduce the evaluation of Q_1, Q_2, over \psi(s0)
     // from the evaluation Q over s0 and s1
@@ -43,10 +35,10 @@ pub fn extend<F: PrimeField>(
         Q_2_evals.push(q1);
     }
 
-    let Q_1_evals_prime = extend(&Q_1_evals, L, matrices, inverse_matrices, i + 1);
-    let Q_2_evals_prime = extend(&Q_2_evals, L, matrices, inverse_matrices, i + 1);
+    let Q_1_evals_prime = extend(&Q_1_evals, matrices, inverse_matrices, i + 1);
+    let Q_2_evals_prime = extend(&Q_2_evals, matrices, inverse_matrices, i + 1);
 
-    let mut extended_evals = vec![F::zero(); evals.len()];
+    let mut extended_evals = vec![F::ZERO; evals.len()];
 
     for (i, ((q1, q2), m)) in Q_1_evals_prime
         .iter()
@@ -122,7 +114,7 @@ mod tests {
         let evals = s.iter().map(|s_i| poly.eval(*s_i)).collect::<Vec<Fp>>();
 
         let (matrices, inverse_matrices) = prepare_matrices(&L);
-        let extended_evals = extend(&evals, &L, &matrices, &inverse_matrices, 0);
+        let extended_evals = extend(&evals, &matrices, &inverse_matrices, 0);
 
         // Compute the expected extended evaluations
         let expected_extended_evals = s_prime
